@@ -10,21 +10,35 @@
     .container { max-width: 600px; margin: 0 auto; }
     h1 { margin-bottom: 0.5rem; font-size: 1.5rem; }
     p { margin-bottom: 1.5rem; color: #666; }
+    .country-form { display: flex; gap: 0.75rem; margin-bottom: 2rem; align-items: center; }
+    .country-form select { flex: 1; padding: 0.6rem 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: #fff; }
+    .country-form button { padding: 0.6rem 1.25rem; background: #3498db; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; white-space: nowrap; }
+    .country-form button:hover { background: #2980b9; }
     .banks { display: flex; flex-direction: column; gap: 0.5rem; }
     .bank-card form { display: contents; }
     .bank-btn { display: block; width: 100%; padding: 0.75rem 1rem; background: #fff; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 1rem; text-align: left; transition: border-color 0.2s; }
     .bank-btn:hover { border-color: #3498db; background: #f8fbff; }
-    .bank-btn small { color: #888; }
-    .back { display: inline-block; margin-top: 1rem; color: #3498db; text-decoration: none; }
+    .no-banks { color: #888; padding: 1rem 0; }
+    .back { display: inline-block; margin-top: 1.5rem; color: #3498db; text-decoration: none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Select Your Bank</h1>
-    <p>Choose the bank you want to connect to Actual Budget.</p>
+    <h1>Connect a Bank</h1>
+    <p>Select your country to see available banks.</p>
+
+    <form class="country-form" method="GET" action="/connect">
+      <select name="country">
+        <option value="">— Select country —</option>
+        {{COUNTRY_OPTIONS}}
+      </select>
+      <button type="submit">Show banks</button>
+    </form>
+
     <div class="banks">
       {{BANKS}}
     </div>
+
     <a href="/" class="back">&larr; Back to dashboard</a>
   </div>
 </body>

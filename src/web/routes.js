@@ -11,6 +11,39 @@ function readView(name) {
   return readFileSync(join(viewsDir, name), 'utf8');
 }
 
+const SUPPORTED_COUNTRIES = [
+  { code: 'AT', name: 'Austria' },
+  { code: 'BE', name: 'Belgium' },
+  { code: 'BG', name: 'Bulgaria' },
+  { code: 'CZ', name: 'Czech Republic' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'DK', name: 'Denmark' },
+  { code: 'EE', name: 'Estonia' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'FI', name: 'Finland' },
+  { code: 'FR', name: 'France' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'GR', name: 'Greece' },
+  { code: 'HR', name: 'Croatia' },
+  { code: 'HU', name: 'Hungary' },
+  { code: 'IE', name: 'Ireland' },
+  { code: 'IS', name: 'Iceland' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'LI', name: 'Liechtenstein' },
+  { code: 'LT', name: 'Lithuania' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'LV', name: 'Latvia' },
+  { code: 'MT', name: 'Malta' },
+  { code: 'NL', name: 'Netherlands' },
+  { code: 'NO', name: 'Norway' },
+  { code: 'PL', name: 'Poland' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'RO', name: 'Romania' },
+  { code: 'SE', name: 'Sweden' },
+  { code: 'SI', name: 'Slovenia' },
+  { code: 'SK', name: 'Slovakia' },
+];
+
 export function createRouter({ enableClient, actualClient, store, config }) {
   const router = Router();
 
@@ -48,39 +81,41 @@ export function createRouter({ enableClient, actualClient, store, config }) {
     res.send(html);
   });
 
-  // Bank selection
+  // Country selector + bank list
   router.get('/connect', async (req, res) => {
-    try {
-      const [plBanks, ltBanks, gbBanks] = await Promise.all([
-        enableClient.getAspsps('PL').catch(() => []),
-        enableClient.getAspsps('LT').catch(() => []),
-        enableClient.getAspsps('GB').catch(() => []),
-      ]);
+    const { country } = req.query;
 
-      const allBanks = [
-        ...(Array.isArray(plBanks) ? plBanks : plBanks?.aspsps || []).map(b => ({ ...b, country: 'PL' })),
-        ...(Array.isArray(ltBanks) ? ltBanks : ltBanks?.aspsps || []).map(b => ({ ...b, country: 'LT' })),
-        ...(Array.isArray(gbBanks) ? gbBanks : gbBanks?.aspsps || []).map(b => ({ ...b, country: 'GB' })),
-      ];
+    const countryOptions = SUPPORTED_COUNTRIES.map(c =>
+      `<option value="${c.code}"${country === c.code ? ' selected' : ''}>${c.name} (${c.code})</option>`
+    ).join('\n');
 
-      let html = readView('connect.html');
-      let cards = '';
-      for (const bank of allBanks) {
-        const name = bank.name || bank.aspsp_name || 'Unknown';
-        const country = bank.country;
-        cards += `<div class="bank-card">
-          <form method="POST" action="/connect/start">
-            <input type="hidden" name="aspspName" value="${name}">
-            <input type="hidden" name="aspspCountry" value="${country}">
-            <button type="submit" class="bank-btn">${name} <small>(${country})</small></button>
-          </form>
-        </div>`;
+    let cards = '';
+    if (country) {
+      try {
+        const result = await enableClient.getAspsps(country);
+        const banks = (Array.isArray(result) ? result : result?.aspsps || []);
+        for (const bank of banks) {
+          const name = bank.name || bank.aspsp_name || 'Unknown';
+          cards += `<div class="bank-card">
+            <form method="POST" action="/connect/start">
+              <input type="hidden" name="aspspName" value="${name}">
+              <input type="hidden" name="aspspCountry" value="${country}">
+              <button type="submit" class="bank-btn">${name}</button>
+            </form>
+          </div>`;
+        }
+        if (!cards) cards = '<p class="no-banks">No banks found for this country.</p>';
+      } catch (err) {
+        cards = `<p class="no-banks">Error loading banks: ${err.message}</p>`;
       }
-      html = html.replace('{{BANKS}}', cards || '<p>No banks found</p>');
-      res.send(html);
-    } catch (err) {
-      res.status(500).send(`Error loading banks: ${err.message}`);
     }
+
+    let html = readView('connect.html');
+    html = html
+      .replace('{{COUNTRY_OPTIONS}}', countryOptions)
+      .replace('{{BANKS}}', cards)
+      .replace('{{SELECTED_COUNTRY}}', country || '');
+    res.send(html);
   });
 
   // Start auth
