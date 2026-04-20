@@ -5,12 +5,17 @@ import { randomUUID } from 'crypto';
 export class Store {
   constructor(dataDir) {
     this.path = join(dataDir, 'state.json');
-    this.state = { sessions: {}, accountMappings: [] };
+    this.state = { sessions: {}, accountMappings: [], syncLogs: [] };
   }
 
   load() {
     if (existsSync(this.path)) {
-      this.state = JSON.parse(readFileSync(this.path, 'utf8'));
+      try {
+        const loaded = JSON.parse(readFileSync(this.path, 'utf8'));
+        this.state = { ...this.state, ...loaded };
+      } catch (err) {
+        console.error('Failed to parse state.json:', err.message);
+      }
     }
     // Ensure all state keys exist
     this.state.sessions = this.state.sessions || {};
