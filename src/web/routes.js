@@ -49,11 +49,20 @@ export function createRouter({ enableClient, actualClient, store, config }) {
   const router = Router();
 
   // Dashboard
-  router.get('/', (req, res) => {
+  router.get('/', async (req, res) => {
+    let actualAccounts = [];
+    try {
+      actualAccounts = await actualClient.getAccounts();
+    } catch (err) {
+      console.error('Failed to fetch actual accounts for dashboard:', err.message);
+    }
+
     const mappings = store.getAccountMappings().map(m => {
       const session = store.getSession(m.sessionId);
       const expired = !session || new Date(session.validUntil) < new Date();
-      return { ...m, expired, bankName: m.bankName, validUntil: session?.validUntil };
+      const actualAcc = actualAccounts.find(a => a.id === m.actualAccountId);
+      const displayName = actualAcc ? actualAcc.name : (m.bankName === 'Bank' ? 'Unknown Bank' : m.bankName);
+      return { ...m, expired, displayName, validUntil: session?.validUntil };
     });
 
     let html = readView('index.html');
@@ -66,7 +75,7 @@ export function createRouter({ enableClient, actualClient, store, config }) {
           ? '<span style="color:#e74c3c">Expired</span>'
           : '<span style="color:#27ae60">Active</span>';
         rows += `<tr>
-          <td>${m.bankName}</td>
+          <td>${m.displayName}</td>
           <td>${m.iban || '-'}</td>
           <td>${status}</td>
           <td>${m.lastSyncDate || 'Never'}</td>
@@ -126,7 +135,7 @@ export function createRouter({ enableClient, actualClient, store, config }) {
   router.post('/connect/start', async (req, res) => {
     try {
       const { aspspName, aspspCountry } = req.body;
-      const redirectUrl = `${config.redirectBaseUrl}/auth/callback`;
+      const redirectUrl = `${config.redirectBaseUrl}/auth/callback?aspsp_name=${encodeURIComponent(aspspName)}`;
       const state = randomUUID();
       const result = await enableClient.startAuth(aspspName, aspspCountry, redirectUrl, state);
       res.redirect(result.url);
