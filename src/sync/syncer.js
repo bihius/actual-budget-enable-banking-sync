@@ -32,7 +32,7 @@ export async function syncAll(enableClient, actualClient, store) {
           continue;
         }
 
-        const dateFrom = mapping.lastSyncDate ? daysAgo(2) : daysAgo(90);
+        const dateFrom = mapping.lastSyncDate ? daysAgo(7) : daysAgo(90);
         const dateTo = today();
 
         console.log(`Fetching transactions for ${mapping.bankName} ${mapping.iban} from ${dateFrom} to ${dateTo}`);
@@ -55,7 +55,7 @@ export async function syncAll(enableClient, actualClient, store) {
         );
 
         console.log(`Synced ${mapping.bankName}: added=${result.added.length}, updated=${result.updated.length}`);
-        store.updateLastSyncDate(mapping.id, daysAgo(2));
+        store.updateLastSyncDate(mapping.id, daysAgo(7));
         results.push({
           mapping: mapping.id,
           status: 'ok',

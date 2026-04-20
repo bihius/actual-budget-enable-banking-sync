@@ -70,6 +70,9 @@ export function createRouter({ enableClient, actualClient, store, config }) {
           <td>${status}</td>
           <td>${m.lastSyncDate || 'Never'}</td>
           <td>
+            <form method="POST" action="/accounts/${m.id}/reset-sync" style="display:inline">
+              <button type="submit" class="btn btn-sm btn-warning">Re-sync</button>
+            </form>
             <form method="POST" action="/disconnect/${m.id}" style="display:inline">
               <button type="submit" class="btn btn-sm btn-danger">Disconnect</button>
             </form>
@@ -222,6 +225,12 @@ export function createRouter({ enableClient, actualClient, store, config }) {
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
+  });
+
+  // Reset sync date (force full 90-day re-fetch on next sync)
+  router.post('/accounts/:id/reset-sync', (req, res) => {
+    store.resetSyncDate(req.params.id);
+    res.redirect('/');
   });
 
   // Disconnect

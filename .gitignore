@@ -3,3 +3,4 @@ data/
 keys/
 .env.local
 *.pem
+CLAUDE.md

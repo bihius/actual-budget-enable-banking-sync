@@ -62,4 +62,9 @@ export class Store {
     this.state.accountMappings = this.state.accountMappings.filter(m => m.id !== id);
     this.save();
   }
+
+  resetSyncDate(id) {
+    const m = this.state.accountMappings.find(m => m.id === id);
+    if (m) { m.lastSyncDate = null; this.save(); }
+  }
 }
