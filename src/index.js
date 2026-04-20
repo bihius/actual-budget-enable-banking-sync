@@ -33,6 +33,11 @@ function validateConfig() {
     logger.error(`Missing required environment variables: ${missing.join(', ')}`);
     process.exit(1);
   }
+
+  if (!config.privateKey) {
+    logger.error(`Failed to read Enable Banking RSA key from: ${config.keyPath}`);
+    process.exit(1);
+  }
 }
 
 validateConfig();
