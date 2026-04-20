@@ -51,7 +51,28 @@ Your Bank ──── PSD2 OAuth ────> Enable Banking API
 - [Actual Budget](https://actualbudget.org) self-hosted server
 - A **publicly reachable HTTPS URL** for the OAuth callback (required by Enable Banking — see note below)
 
-> **Important:** The container itself does not need to be exposed to the internet. Only the `/auth/callback` endpoint must be reachable during the bank authorization step. After that, all communication is outbound only (your server → Enable Banking API). A reverse proxy (HAProxy, nginx, Caddy) with SSL termination in front of the container is the recommended setup.
+> **Important:** The container itself does not need to be exposed to the internet permanently. Only the `/auth/callback` endpoint must be reachable during the bank authorization step. After that, all communication is outbound only.
+
+### No Public IP? No problem!
+
+If you are behind a CGNAT (e.g., mobile internet, some fiber providers) or don't want to open ports on your router, you can use a tunnel service to handle the OAuth callback:
+
+#### 1. Cloudflare Tunnel (Recommended)
+Cloudflare offers a free service called **Cloudflare Tunnel** (part of Zero Trust) that securely connects your local server to the internet without opening any ports.
+- Install the `cloudflared` connector on your server.
+- Create a tunnel and point a subdomain (e.g., `banking.your-domain.com`) to `http://localhost:3000`.
+- Use this subdomain as your `REDIRECT_BASE_URL`.
+
+#### 2. Tailscale Funnel
+If you use Tailscale, you can use **Tailscale Funnel** to expose your local service to the internet.
+- Run: `tailscale funnel 3000`
+- Tailscale will give you a public URL like `https://node-name.tailnet-name.ts.net`.
+- Use this as your `REDIRECT_BASE_URL`.
+
+#### 3. Ngrok / LocalTunnel
+For a quick one-time setup, you can use **Ngrok**:
+- `ngrok http 3000`
+- Use the provided HTTPS URL for authorization, then you can stop it (but remember that Enable Banking requires the same redirect URL every time you want to add/refresh a bank).
 
 ---
 
