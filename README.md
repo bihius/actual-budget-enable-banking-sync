@@ -128,6 +128,14 @@ Open `http://localhost:3000` (or your reverse proxy URL) to access the web UI.
 4. On the mapping screen, link your bank accounts to existing Actual Budget accounts, or create new ones.
 5. Transactions will sync immediately, and then automatically based on your cron schedule.
 
+### Handling Session Expiry
+
+For security reasons (PSD2 regulations), bank sessions typically expire every 90 or 180 days. 
+- When a session expires, the dashboard will show a red **"Expired - Reconnect needed"** message.
+- Click the **"Reconnect"** button next to the account. 
+- Follow the authorization process again. 
+- The system will automatically update your existing connection and preserve your sync history, so you won't have to re-download old transactions.
+
 ---
 
 ## Under the Hood

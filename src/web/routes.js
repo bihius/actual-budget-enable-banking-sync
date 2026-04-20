@@ -58,6 +58,8 @@ export function createRouter({ enableClient, actualClient, store, config }) {
       logger.error({ err }, 'Failed to fetch actual accounts for dashboard');
     }
 
+    const syncing = isSyncing();
+
     const mappings = store.getAccountMappings().map((m) => {
       const session = store.getSession(m.sessionId);
       const expired = !session || new Date(session.validUntil) < new Date();
@@ -89,12 +91,12 @@ export function createRouter({ enableClient, actualClient, store, config }) {
         .join('') || '<p style="color:#888;font-size:0.9rem">No sync history yet</p>';
 
     let html = readView('index.html');
-    
+
     // Add Syncing status to header if active
-    const syncStatusHeader = isSyncing() 
-      ? '<div style="background:#fff3cd;color:#856404;padding:0.75rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #ffeeba"><strong>Sync in progress...</strong> The system is currently fetching data from your bank. Refresh in a few minutes to see results.</div>' 
+    const syncStatusHeader = syncing
+      ? '<div style="background:#fff3cd;color:#856404;padding:0.75rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #ffeeba"><strong>Sync in progress...</strong> The system is currently fetching data from your bank. Refresh in a few minutes to see results.</div>'
       : '';
-    
+
     html = html.replace('{{SYNC_STATUS}}', syncStatusHeader);
 
     let rows = '';
@@ -112,14 +114,18 @@ export function createRouter({ enableClient, actualClient, store, config }) {
           nameHtml += `<br><span style="color:#7f8c8d;font-size:0.75rem">Session valid until: ${expiryDate}</span>`;
         }
 
+        const actionButton = m.expired
+          ? `<a href="/connect?reconnect=${m.id}" class="btn btn-sm btn-warning">Reconnect</a>`
+          : `<form method="POST" action="/accounts/${m.id}/reset-sync" style="display:inline">
+              <button type="submit" class="btn btn-sm btn-warning">Re-sync</button>
+            </form>`;
+
         rows += `<tr>
           <td>${nameHtml}</td>
           <td>${m.iban || '-'}</td>
           <td>${m.lastSyncDate || 'Never'}</td>
           <td>
-            <form method="POST" action="/accounts/${m.id}/reset-sync" style="display:inline">
-              <button type="submit" class="btn btn-sm btn-warning">Re-sync</button>
-            </form>
+            ${actionButton}
             <form method="POST" action="/disconnect/${m.id}" style="display:inline">
               <button type="submit" class="btn btn-sm btn-danger">Disconnect</button>
             </form>
@@ -130,10 +136,9 @@ export function createRouter({ enableClient, actualClient, store, config }) {
     html = html.replace('{{ROWS}}', rows).replace('{{SYNC_LOGS}}', syncLogs);
     res.send(html);
   });
-
   // Country selector + bank list
   router.get('/connect', async (req, res) => {
-    const { country } = req.query;
+    const { country, reconnect } = req.query;
 
     const countryOptions = SUPPORTED_COUNTRIES.map(
       (c) =>
@@ -151,6 +156,7 @@ export function createRouter({ enableClient, actualClient, store, config }) {
             <form method="POST" action="/connect/start">
               <input type="hidden" name="aspspName" value="${name}">
               <input type="hidden" name="aspspCountry" value="${country}">
+              ${reconnect ? `<input type="hidden" name="reconnect" value="${reconnect}">` : ''}
               <button type="submit" class="bank-btn">${name}</button>
             </form>
           </div>`;
@@ -165,16 +171,17 @@ export function createRouter({ enableClient, actualClient, store, config }) {
     html = html
       .replace('{{COUNTRY_OPTIONS}}', countryOptions)
       .replace('{{BANKS}}', cards)
-      .replace('{{SELECTED_COUNTRY}}', country || '');
+      .replace('{{SELECTED_COUNTRY}}', country || '')
+      .replace('{{RECONNECT_INPUT}}', reconnect ? `<input type="hidden" name="reconnect" value="${reconnect}">` : '');
     res.send(html);
   });
 
   // Start auth
   router.post('/connect/start', async (req, res) => {
     try {
-      const { aspspName, aspspCountry } = req.body;
+      const { aspspName, aspspCountry, reconnect } = req.body;
       const redirectUrl = `${config.redirectBaseUrl}/auth/callback?aspsp_name=${encodeURIComponent(aspspName)}`;
-      const state = randomUUID();
+      const state = reconnect || randomUUID();
       const result = await enableClient.startAuth(aspspName, aspspCountry, redirectUrl, state);
       res.redirect(result.url);
     } catch (err) {
@@ -184,7 +191,7 @@ export function createRouter({ enableClient, actualClient, store, config }) {
 
   // Auth callback
   router.get('/auth/callback', async (req, res) => {
-    const { code, error } = req.query;
+    const { code, error, state } = req.query;
     if (error) return res.status(400).send(`Bank authorization error: ${error}`);
     if (!code) return res.status(400).send('Missing authorization code');
 
@@ -199,6 +206,17 @@ export function createRouter({ enableClient, actualClient, store, config }) {
         accounts: session.accounts || [],
         createdAt: new Date().toISOString(),
       });
+
+      // If state is a mapping ID, this is a reconnect flow
+      const mappings = store.getAccountMappings();
+      const existingMapping = mappings.find((m) => m.id === state);
+
+      if (existingMapping) {
+        existingMapping.sessionId = session.session_id;
+        store.save();
+        return res.redirect('/');
+      }
+
       res.redirect(`/map/${session.session_id}`);
     } catch (err) {
       res.status(500).send(`Session creation failed: ${err.message}`);
