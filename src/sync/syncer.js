@@ -47,6 +47,8 @@ export async function syncAll(enableClient, actualClient, store) {
         if (actualTransactions.length === 0) {
           console.log(`No booked transactions for ${mapping.bankName}`);
           results.push({ mapping: mapping.id, status: 'ok', added: 0, updated: 0 });
+          // Add a small delay between accounts anyway
+          await new Promise(r => setTimeout(r, 2000));
           continue;
         }
 
@@ -62,6 +64,9 @@ export async function syncAll(enableClient, actualClient, store) {
           added: result.added.length,
           updated: result.updated.length,
         });
+
+        // Add a delay between accounts to avoid hitting rate limits
+        await new Promise(r => setTimeout(r, 5000));
       } catch (err) {
         console.error(`Sync failed for ${mapping.bankName}:`, err.message);
         results.push({ mapping: mapping.id, status: 'error', error: err.message });

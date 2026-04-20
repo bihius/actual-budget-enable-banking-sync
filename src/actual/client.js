@@ -22,6 +22,11 @@ export class ActualClient {
     return api.importTransactions(accountId, transactions);
   }
 
+  async sync() {
+    if (!this.#initialized) return;
+    await api.sync();
+  }
+
   async shutdown() {
     if (!this.#initialized) return;
     await api.shutdown();

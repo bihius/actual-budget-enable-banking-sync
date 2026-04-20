@@ -220,6 +220,7 @@ export function createRouter({ enableClient, actualClient, store, config }) {
   // Manual sync
   router.post('/sync/now', async (req, res) => {
     try {
+      await actualClient.sync();
       const results = await syncAll(enableClient, actualClient, store);
       res.json(results);
     } catch (err) {

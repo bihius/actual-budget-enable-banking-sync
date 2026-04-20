@@ -29,6 +29,7 @@ app.listen(config.port, () => {
 cron.schedule(config.syncCron, async () => {
   console.log(`[${new Date().toISOString()}] Starting scheduled sync...`);
   try {
+    await actualClient.sync();
     const results = await syncAll(enableClient, actualClient, store);
     console.log('Scheduled sync complete:', JSON.stringify(results));
   } catch (err) {

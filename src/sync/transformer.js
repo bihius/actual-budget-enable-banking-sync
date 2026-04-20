@@ -9,11 +9,17 @@ export function transformTransaction(ebTx) {
   const rawAmount = Math.round(parseFloat(ebTx.transaction_amount.amount) * 100);
   const amount = ebTx.credit_debit_indicator === 'DBIT' ? -rawAmount : rawAmount;
 
-  const payeeName = ebTx.credit_debit_indicator === 'DBIT'
+  let payeeName = ebTx.credit_debit_indicator === 'DBIT'
     ? ebTx.creditor?.name
     : ebTx.debtor?.name;
 
   const notes = ebTx.remittance_information?.join(' ') || '';
+
+  // Fallback: if no payee name, try to use the first line of remittance information
+  if (!payeeName && ebTx.remittance_information?.length > 0) {
+    payeeName = ebTx.remittance_information[0].slice(0, 50);
+  }
+
   const importedId = ebTx.transaction_id || ebTx.entry_reference || fallbackId(ebTx);
 
   return {
