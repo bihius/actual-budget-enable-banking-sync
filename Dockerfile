@@ -17,15 +17,16 @@ ENV PORT=3000
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 --home /data syncuser
 
-# Copy built dependencies
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json ./package.json
+# Copy built dependencies with correct ownership
+COPY --from=deps --chown=syncuser:nodejs /app/node_modules ./node_modules
+COPY --from=deps --chown=syncuser:nodejs /app/package.json ./package.json
 
-# Copy source code
-COPY src ./src
+# Copy source code with correct ownership
+COPY --chown=syncuser:nodejs src ./src
 
-# Ensure keys directory exists and is writable
-RUN mkdir -p /keys && chown -R syncuser:nodejs /data /keys
+# Create keys dir and ensure /data and /keys are writable by syncuser
+# We don't use -R on /data to avoid slow crawls of node_modules
+RUN mkdir -p /keys && chown syncuser:nodejs /data /keys
 
 USER syncuser
 
