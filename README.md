@@ -81,8 +81,8 @@ Keep `keys/private.pem` secret — never commit it, never share it.
 ### 3. Configure environment
 
 ```bash
-cp .env.example .env.local
-# Edit .env.local with your values
+cp .env.example .env
+# Edit .env with your values
 ```
 
 Key variables:
