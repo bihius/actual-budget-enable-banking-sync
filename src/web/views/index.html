@@ -1,79 +1,186 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Actual Budget - Bank Sync</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #f5f6fa; color: #2c3e50; padding: 2rem; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { margin-bottom: 1.5rem; font-size: 1.5rem; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #f8f9fa; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #666; }
-    .actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; }
-    .btn { display: inline-block; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; text-decoration: none; color: #fff; }
-    .btn-primary { background: #3498db; }
-    .btn-primary:hover { background: #2980b9; }
-    .btn-success { background: #27ae60; }
-    .btn-success:hover { background: #219a52; }
-    .btn-danger { background: #e74c3c; font-size: 0.8rem; padding: 0.3rem 0.6rem; }
-    .btn-danger:hover { background: #c0392b; }
-    .btn-warning { background: #e67e22; font-size: 0.8rem; padding: 0.3rem 0.6rem; }
-    .btn-warning:hover { background: #ca6f1e; }
-    .btn-sm { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
-    #sync-result { margin-top: 1rem; padding: 0.75rem; background: #fff; border-radius: 6px; display: none; white-space: pre-wrap; font-size: 0.85rem; }
-    .activity { margin-top: 2rem; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1rem; }
-    .activity h2 { font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
-    .log-entry { font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px dashed #f0f0f0; }
-    .log-entry:last-child { border-bottom: none; }
-    .log-entry strong { color: #7f8c8d; width: 150px; display: inline-block; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Bank Sync Dashboard</h1>
-    <table>
-      <thead>
-        <tr><th>Bank / Account</th><th>IBAN</th><th>Last Sync</th><th>Actions</th></tr>
-      </thead>
-      <tbody>
-        {{ROWS}}
-      </tbody>
-    </table>
-    <div class="actions">
-      <a href="/connect" class="btn btn-primary">+ Add Bank Connection</a>
-      <button class="btn btn-success" onclick="syncNow()">Sync Now</button>
-    </div>
-    <div id="sync-result"></div>
-
-    <div class="activity">
-      <h2>Recent Activity</h2>
-      {{SYNC_LOGS}}
-    </div>
-  </div>
-  <script>
-    async function syncNow() {
-      const el = document.getElementById('sync-result');
-      el.style.display = 'block';
-      el.textContent = 'Sync started in background... You can refresh this page in a few minutes.';
-      try {
-        const res = await fetch('/sync/now', { method: 'POST' });
-        const data = await res.json();
-        if (data.status === 'started') {
-          el.style.background = '#d4edda';
-          el.style.color = '#155724';
-          el.textContent = 'Sync is running in the background. Check logs or refresh this page later.';
-        } else {
-          el.textContent = JSON.stringify(data, null, 2);
-        }
-      } catch (err) {
-        el.style.background = '#f8d7da';
-        el.style.color = '#721c24';
-        el.textContent = 'Error: ' + err.message;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Actual Budget - Bank Sync</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-    }
-  </script>
-</body>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        background: #f5f6fa;
+        color: #2c3e50;
+        padding: 2rem;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      th,
+      td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+      }
+      th {
+        background: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #666;
+      }
+      .actions {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+      }
+      .btn {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        text-decoration: none;
+        color: #fff;
+      }
+      .btn-primary {
+        background: #3498db;
+      }
+      .btn-primary:hover {
+        background: #2980b9;
+      }
+      .btn-success {
+        background: #27ae60;
+      }
+      .btn-success:hover {
+        background: #219a52;
+      }
+      .btn-danger {
+        background: #e74c3c;
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+      }
+      .btn-danger:hover {
+        background: #c0392b;
+      }
+      .btn-warning {
+        background: #e67e22;
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+      }
+      .btn-warning:hover {
+        background: #ca6f1e;
+      }
+      .btn-sm {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+      }
+      #sync-result {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: #fff;
+        border-radius: 6px;
+        display: none;
+        white-space: pre-wrap;
+        font-size: 0.85rem;
+      }
+      .activity {
+        margin-top: 2rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+      }
+      .activity h2 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.5rem;
+      }
+      .log-entry {
+        font-size: 0.85rem;
+        padding: 0.4rem 0;
+        border-bottom: 1px dashed #f0f0f0;
+      }
+      .log-entry:last-child {
+        border-bottom: none;
+      }
+      .log-entry strong {
+        color: #7f8c8d;
+        width: 150px;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Bank Sync Dashboard</h1>
+      {{SYNC_STATUS}}
+      <table>
+
+        <thead>
+          <tr>
+            <th>Bank / Account</th>
+            <th>IBAN</th>
+            <th>Last Sync</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ROWS}}
+        </tbody>
+      </table>
+      <div class="actions">
+        <a href="/connect" class="btn btn-primary">+ Add Bank Connection</a>
+        <button class="btn btn-success" onclick="syncNow()">Sync Now</button>
+      </div>
+      <div id="sync-result"></div>
+
+      <div class="activity">
+        <h2>Recent Activity</h2>
+        {{SYNC_LOGS}}
+      </div>
+    </div>
+    <script>
+      async function syncNow() {
+        const el = document.getElementById('sync-result');
+        el.style.display = 'block';
+        el.textContent =
+          'Sync started in background... You can refresh this page in a few minutes.';
+        try {
+          const res = await fetch('/sync/now', { method: 'POST' });
+          const data = await res.json();
+          if (data.status === 'started') {
+            el.style.background = '#d4edda';
+            el.style.color = '#155724';
+            el.textContent =
+              'Sync is running in the background. Check logs or refresh this page later.';
+          } else {
+            el.textContent = JSON.stringify(data, null, 2);
+          }
+        } catch (err) {
+          el.style.background = '#f8d7da';
+          el.style.color = '#721c24';
+          el.textContent = 'Error: ' + err.message;
+        }
+      }
+    </script>
+  </body>
 </html>

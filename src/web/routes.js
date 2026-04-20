@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { randomUUID } from 'crypto';
-import { syncAll } from '../sync/syncer.js';
+import { syncAll, isSyncing } from '../sync/syncer.js';
 import logger from '../logger.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -89,6 +89,14 @@ export function createRouter({ enableClient, actualClient, store, config }) {
         .join('') || '<p style="color:#888;font-size:0.9rem">No sync history yet</p>';
 
     let html = readView('index.html');
+    
+    // Add Syncing status to header if active
+    const syncStatusHeader = isSyncing() 
+      ? '<div style="background:#fff3cd;color:#856404;padding:0.75rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #ffeeba"><strong>Sync in progress...</strong> The system is currently fetching data from your bank. Refresh in a few minutes to see results.</div>' 
+      : '';
+    
+    html = html.replace('{{SYNC_STATUS}}', syncStatusHeader);
+
     let rows = '';
     if (mappings.length === 0) {
       rows =

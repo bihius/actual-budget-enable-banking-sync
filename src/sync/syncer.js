@@ -17,6 +17,10 @@ export function _resetSyncing() {
   syncing = false;
 }
 
+export function isSyncing() {
+  return syncing;
+}
+
 export async function syncAll(enableClient, actualClient, store) {
   if (syncing) {
     logger.info('Sync already in progress, skipping');
@@ -29,11 +33,14 @@ export async function syncAll(enableClient, actualClient, store) {
     const mappings = store.getAccountMappings();
 
     for (const mapping of mappings) {
+      let resultEntry = { mapping: mapping.id, status: 'ok', added: 0, updated: 0 };
       try {
         const session = store.getSession(mapping.sessionId);
         if (!session || new Date(session.validUntil) < new Date()) {
           logger.warn(`Session expired for ${mapping.bankName} (${mapping.iban}), skipping`);
-          results.push({ mapping: mapping.id, status: 'expired' });
+          resultEntry.status = 'expired';
+          results.push(resultEntry);
+          store.addSyncLog({ results: [resultEntry] });
           continue;
         }
 
@@ -55,39 +62,41 @@ export async function syncAll(enableClient, actualClient, store) {
 
         if (actualTransactions.length === 0) {
           logger.info(`No booked transactions for ${mapping.bankName}`);
-          results.push({ mapping: mapping.id, status: 'ok', added: 0, updated: 0 });
+          results.push(resultEntry);
+          store.addSyncLog({ results: [resultEntry] });
           // Add a small delay between accounts anyway
           await new Promise((r) => setTimeout(r, 2000));
           continue;
         }
 
-        const result = await actualClient.importTransactions(
+        const importResult = await actualClient.importTransactions(
           mapping.actualAccountId,
           actualTransactions
         );
 
         logger.info(
-          `Synced ${mapping.bankName}: added=${result.added.length}, updated=${result.updated.length}`
+          `Synced ${mapping.bankName}: added=${importResult.added.length}, updated=${importResult.updated.length}`
         );
         store.updateLastSyncDate(mapping.id, daysAgo(7));
-        results.push({
-          mapping: mapping.id,
-          status: 'ok',
-          added: result.added.length,
-          updated: result.updated.length,
-        });
+        
+        resultEntry.added = importResult.added.length;
+        resultEntry.updated = importResult.updated.length;
+        results.push(resultEntry);
+        store.addSyncLog({ results: [resultEntry] });
 
         // Add a delay between accounts to avoid hitting rate limits
         await new Promise((r) => setTimeout(r, 5000));
       } catch (err) {
         logger.error({ err }, `Sync failed for ${mapping.bankName}`);
-        results.push({ mapping: mapping.id, status: 'error', error: err.message });
+        resultEntry.status = 'error';
+        resultEntry.error = err.message;
+        results.push(resultEntry);
+        store.addSyncLog({ results: [resultEntry] });
       }
     }
   } finally {
     syncing = false;
   }
 
-  store.addSyncLog({ results });
   return { results };
 }
