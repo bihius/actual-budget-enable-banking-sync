@@ -18,11 +18,11 @@ RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 --home /data syncuser
 
 # Copy built dependencies
-COPY --from=deps /app/node_modules /data/node_modules
-COPY --from=deps /app/package.json /data/package.json
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./package.json
 
 # Copy source code
-COPY src /data/src
+COPY src ./src
 
 # Ensure keys directory exists and is writable
 RUN mkdir -p /keys && chown -R syncuser:nodejs /data /keys
@@ -34,4 +34,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-CMD ["node", "/data/src/index.js"]
+CMD ["node", "src/index.js"]
