@@ -4,6 +4,7 @@ FROM node:20-alpine AS base
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+RUN npm install
 RUN npm ci --omit=dev
 
 # Production image
@@ -33,4 +34,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Run from /data but point to the code in /app
-CMD ["node", "/app/src/index.js"]
+CMD ["node", "--import", "/app/src/polyfill.js", "/app/src/index.js"]

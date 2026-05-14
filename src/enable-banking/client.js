@@ -47,7 +47,8 @@ export class EnableBankingClient {
     return this._request('GET', `/aspsps${params}`);
   }
 
-  async startAuth(aspspName, aspspCountry, redirectUrl, state) {
+    async startAuth(aspspName, aspspCountry, redirectUrl, state) {
+	
     const validUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
     const body = {
       access: {
@@ -57,9 +58,10 @@ export class EnableBankingClient {
       },
       aspsp: { name: aspspName, country: aspspCountry },
       state: state || crypto.randomUUID(),
-      redirect_url: redirectUrl,
+	redirect_url: encodeURI(redirectUrl),
       psu_type: 'personal',
     };
+	logger.info('redirect url: '+redirectUrl);
     logger.info({ body }, 'startAuth body');
     return this._request('POST', '/auth', body);
   }

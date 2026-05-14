@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node --import ./src/polyfill.js src/index.js",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write src/",
@@ -14,7 +14,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@actual-app/api": "^26.3.0",
+    "@actual-app/api": "^26.5.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^3.0.3",
