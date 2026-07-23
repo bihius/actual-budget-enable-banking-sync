@@ -1,6 +1,6 @@
 services:
   actual-eb-sync:
-    image: ghcr.io/${GITHUB_REPOSITORY:-bihius/actualbudget-bank-sync}:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-bihius/actual-budget-enable-banking-sync}:latest
     build: .
     container_name: actual-eb-sync
     restart: unless-stopped
