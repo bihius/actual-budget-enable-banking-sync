@@ -9,9 +9,7 @@ export function transformTransaction(ebTx) {
   const rawAmount = Math.round(parseFloat(ebTx.transaction_amount.amount) * 100);
   const amount = ebTx.credit_debit_indicator === 'DBIT' ? -rawAmount : rawAmount;
 
-  let payeeName = ebTx.credit_debit_indicator === 'DBIT'
-    ? ebTx.creditor?.name
-    : ebTx.debtor?.name;
+  let payeeName = ebTx.credit_debit_indicator === 'DBIT' ? ebTx.creditor?.name : ebTx.debtor?.name;
 
   const notes = ebTx.remittance_information?.join(' ') || '';
 

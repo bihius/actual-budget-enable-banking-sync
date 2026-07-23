@@ -36,7 +36,7 @@ In personal finance, privacy is paramount. This application is designed to keep 
 1. **Docker + Docker Compose** installed on your server.
 2. **Enable Banking Account:** Register at [Enable Banking](https://enablebanking.com) and create an application.
 3. **Actual Budget:** A running, self-hosted instance of Actual Budget.
-4. **Public HTTPS Callback URL:** Enable Banking requires a publicly reachable URL for the OAuth redirect (e.g., `https://banking.your-domain.com/auth/callback`).
+4. **Public HTTPS Callback URL:** Enable Banking requires a publicly reachable URL for the OAuth redirect (e.g., `https://banking.your-domain.com/auth/callback`). Register this exact string.
 
 > **Note on the Public URL:** The container itself does not need to be permanently exposed to the internet. Only the `/auth/callback` endpoint must be reachable during the initial bank authorization step. After that, all sync communication is outbound only.
 
@@ -99,7 +99,7 @@ Edit the `.env` file with your specific values:
 ### 4. Register the Callback URL
 
 In your Enable Banking Control Panel -> Application -> Redirect URIs, add your callback URL:
-`https://banking.your-domain.com/auth/callback`
+`https://your-domain.com/auth/callback`
 
 ### 5. Start the Service
 

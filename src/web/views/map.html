@@ -1,110 +1,211 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Map Accounts</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #f5f6fa; color: #2c3e50; padding: 2rem; }
-    .container { max-width: 520px; margin: 0 auto; }
-    h1 { margin-bottom: 0.5rem; font-size: 1.5rem; }
-    p { margin-bottom: 1.5rem; color: #666; }
-    label { display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.9rem; }
-    select, input[type="text"] { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; background: #fff; }
-    .field { margin-bottom: 1.2rem; }
-    .btn { padding: 0.6rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; color: #fff; background: #3498db; }
-    .btn:hover { background: #2980b9; }
-    .btn-sm { padding: 0.35rem 0.8rem; font-size: 0.85rem; background: #27ae60; }
-    .btn-sm:hover { background: #219a52; }
-    .divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0; color: #999; font-size: 0.85rem; }
-    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #ddd; }
-    .new-account-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1.2rem; display: none; }
-    .new-account-box.visible { display: block; }
-    .row { display: flex; gap: 0.75rem; align-items: flex-end; }
-    .row .field { flex: 1; margin-bottom: 0; }
-    .back { display: inline-block; margin-top: 1rem; color: #3498db; text-decoration: none; }
-    .tag { display: inline-block; background: #eaf4fb; color: #2980b9; border-radius: 4px; padding: 0.15rem 0.5rem; font-size: 0.8rem; margin-left: 0.4rem; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Map Account</h1>
-    <p>Connected to <strong>{{BANK_NAME}}</strong>. Map your bank account to an Actual Budget account.</p>
-    <form method="POST" action="/map">
-      <input type="hidden" name="sessionId" value="{{SESSION_ID}}">
-
-      <div class="field">
-        <label>Bank Account</label>
-        <select name="enableAccountUid" id="ebSelect" onchange="updateIban()">
-          {{EB_ACCOUNTS}}
-        </select>
-        <input type="hidden" name="iban" id="ibanField">
-      </div>
-
-      <div class="field">
-        <label>Actual Budget Account</label>
-        <select name="actualAccountId" id="actualSelect">
-          <option value="">— select existing account —</option>
-          {{ACTUAL_ACCOUNTS}}
-        </select>
-      </div>
-
-      <div class="divider">or</div>
-
-      <div>
-        <button type="button" class="btn btn-sm" onclick="toggleNewAccount()">+ Create new Actual account</button>
-      </div>
-
-      <div class="new-account-box" id="newAccountBox">
-        <div class="field">
-          <label>Account Name</label>
-          <input type="text" name="newAccountName" id="newAccountName" placeholder="e.g. Revolut EUR">
-        </div>
-        <div class="row">
-          <div class="field">
-            <label>Type</label>
-            <select name="newAccountType">
-              <option value="checking">Checking</option>
-              <option value="savings">Savings</option>
-              <option value="credit">Credit Card</option>
-              <option value="investment">Investment</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Opening Balance</label>
-            <input type="text" name="newAccountBalance" placeholder="0.00">
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:1.5rem">
-        <button type="submit" class="btn">Save Mapping &amp; Start Sync</button>
-      </div>
-    </form>
-    <a href="/" class="back">&larr; Back to dashboard</a>
-  </div>
-  <script>
-    function updateIban() {
-      const sel = document.getElementById('ebSelect');
-      const opt = sel.options[sel.selectedIndex];
-      document.getElementById('ibanField').value = opt.dataset.iban || '';
-    }
-
-    function toggleNewAccount() {
-      const box = document.getElementById('newAccountBox');
-      const actualSelect = document.getElementById('actualSelect');
-      const visible = box.classList.toggle('visible');
-      if (visible) {
-        actualSelect.value = '';
-        actualSelect.disabled = true;
-      } else {
-        actualSelect.disabled = false;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Map Accounts</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-    }
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        background: #f5f6fa;
+        color: #2c3e50;
+        padding: 2rem;
+      }
+      .container {
+        max-width: 520px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
+      }
+      p {
+        margin-bottom: 1.5rem;
+        color: #666;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      select,
+      input[type='text'] {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        background: #fff;
+      }
+      .field {
+        margin-bottom: 1.2rem;
+      }
+      .btn {
+        padding: 0.6rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        color: #fff;
+        background: #3498db;
+      }
+      .btn:hover {
+        background: #2980b9;
+      }
+      .btn-sm {
+        padding: 0.35rem 0.8rem;
+        font-size: 0.85rem;
+        background: #27ae60;
+      }
+      .btn-sm:hover {
+        background: #219a52;
+      }
+      .divider {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 1.5rem 0;
+        color: #999;
+        font-size: 0.85rem;
+      }
+      .divider::before,
+      .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #ddd;
+      }
+      .new-account-box {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.2rem;
+        display: none;
+      }
+      .new-account-box.visible {
+        display: block;
+      }
+      .row {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
+      }
+      .row .field {
+        flex: 1;
+        margin-bottom: 0;
+      }
+      .back {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #3498db;
+        text-decoration: none;
+      }
+      .tag {
+        display: inline-block;
+        background: #eaf4fb;
+        color: #2980b9;
+        border-radius: 4px;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.8rem;
+        margin-left: 0.4rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Map Account</h1>
+      <p>
+        Connected to <strong>{{BANK_NAME}}</strong>. Map your bank account to an Actual Budget
+        account.
+      </p>
+      <form method="POST" action="/map">
+        <input type="hidden" name="sessionId" value="{{SESSION_ID}}" />
 
-    updateIban();
-  </script>
-</body>
+        <div class="field">
+          <label>Bank Account</label>
+          <select name="enableAccountUid" id="ebSelect" onchange="updateIban()">
+            {{EB_ACCOUNTS}}
+          </select>
+          <input type="hidden" name="iban" id="ibanField" />
+        </div>
+
+        <div class="field">
+          <label>Actual Budget Account</label>
+          <select name="actualAccountId" id="actualSelect">
+            <option value="">— select existing account —</option>
+            {{ACTUAL_ACCOUNTS}}
+          </select>
+        </div>
+
+        <div class="divider">or</div>
+
+        <div>
+          <button type="button" class="btn btn-sm" onclick="toggleNewAccount()">
+            + Create new Actual account
+          </button>
+        </div>
+
+        <div class="new-account-box" id="newAccountBox">
+          <div class="field">
+            <label>Account Name</label>
+            <input
+              type="text"
+              name="newAccountName"
+              id="newAccountName"
+              placeholder="e.g. Revolut EUR"
+            />
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Type</label>
+              <select name="newAccountType">
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+                <option value="credit">Credit Card</option>
+                <option value="investment">Investment</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Opening Balance</label>
+              <input type="text" name="newAccountBalance" placeholder="0.00" />
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem">
+          <button type="submit" class="btn">Save Mapping &amp; Start Sync</button>
+        </div>
+      </form>
+      <a href="/" class="back">&larr; Back to dashboard</a>
+    </div>
+    <script>
+      function updateIban() {
+        const sel = document.getElementById('ebSelect');
+        const opt = sel.options[sel.selectedIndex];
+        document.getElementById('ibanField').value = opt.dataset.iban || '';
+      }
+
+      function toggleNewAccount() {
+        const box = document.getElementById('newAccountBox');
+        const actualSelect = document.getElementById('actualSelect');
+        const visible = box.classList.toggle('visible');
+        if (visible) {
+          actualSelect.value = '';
+          actualSelect.disabled = true;
+        } else {
+          actualSelect.disabled = false;
+        }
+      }
+
+      updateIban();
+    </script>
+  </body>
 </html>
