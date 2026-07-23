@@ -57,9 +57,10 @@ export class EnableBankingClient {
       },
       aspsp: { name: aspspName, country: aspspCountry },
       state: state || crypto.randomUUID(),
-      redirect_url: redirectUrl,
+      redirect_url: encodeURI(redirectUrl),
       psu_type: 'personal',
     };
+    logger.info('redirect url: ' + redirectUrl);
     logger.info({ body }, 'startAuth body');
     return this._request('POST', '/auth', body);
   }

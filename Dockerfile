@@ -3,6 +3,7 @@ FROM node:20-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
@@ -33,4 +34,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Run from /data but point to the code in /app
-CMD ["node", "/app/src/index.js"]
+CMD ["node", "--import", "/app/src/polyfill.js", "/app/src/index.js"]

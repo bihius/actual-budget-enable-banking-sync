@@ -78,7 +78,7 @@ export async function syncAll(enableClient, actualClient, store) {
           `Synced ${mapping.bankName}: added=${importResult.added.length}, updated=${importResult.updated.length}`
         );
         store.updateLastSyncDate(mapping.id, daysAgo(7));
-        
+
         resultEntry.added = importResult.added.length;
         resultEntry.updated = importResult.updated.length;
         results.push(resultEntry);

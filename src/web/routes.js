@@ -172,7 +172,10 @@ export function createRouter({ enableClient, actualClient, store, config }) {
       .replace('{{COUNTRY_OPTIONS}}', countryOptions)
       .replace('{{BANKS}}', cards)
       .replace('{{SELECTED_COUNTRY}}', country || '')
-      .replace('{{RECONNECT_INPUT}}', reconnect ? `<input type="hidden" name="reconnect" value="${reconnect}">` : '');
+      .replace(
+        '{{RECONNECT_INPUT}}',
+        reconnect ? `<input type="hidden" name="reconnect" value="${reconnect}">` : ''
+      );
     res.send(html);
   });
 
@@ -180,8 +183,8 @@ export function createRouter({ enableClient, actualClient, store, config }) {
   router.post('/connect/start', async (req, res) => {
     try {
       const { aspspName, aspspCountry, reconnect } = req.body;
-      const redirectUrl = `${config.redirectBaseUrl}/auth/callback?aspsp_name=${encodeURIComponent(aspspName)}`;
-      const state = reconnect || randomUUID();
+      const redirectUrl = `${config.redirectBaseUrl}/auth/callback`;
+      const state = reconnect ? `${reconnect}|${aspspName}` : `${randomUUID()}|${aspspName}`;
       const result = await enableClient.startAuth(aspspName, aspspCountry, redirectUrl, state);
       res.redirect(result.url);
     } catch (err) {
@@ -191,7 +194,8 @@ export function createRouter({ enableClient, actualClient, store, config }) {
 
   // Auth callback
   router.get('/auth/callback', async (req, res) => {
-    const { code, error, state } = req.query;
+    const { code, error, state: stateParam } = req.query;
+    const [state, aspspName] = stateParam?.split('|') || [];
     if (error) return res.status(400).send(`Bank authorization error: ${error}`);
     if (!code) return res.status(400).send('Missing authorization code');
 
@@ -199,7 +203,7 @@ export function createRouter({ enableClient, actualClient, store, config }) {
       const session = await enableClient.createSession(code);
       store.addSession({
         sessionId: session.session_id,
-        aspspName: req.query.aspsp_name || 'Bank',
+        aspspName: aspspName || 'Bank',
         validUntil:
           session.access?.valid_until ||
           new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
