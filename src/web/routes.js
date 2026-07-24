@@ -217,6 +217,20 @@ export function createRouter({ enableClient, actualClient, store, config }) {
 
       if (existingMapping) {
         existingMapping.sessionId = session.session_id;
+        // Enable Banking account UIDs are scoped to the session, so a
+        // reconnect issues a new UID for the same physical account even
+        // though the IBAN doesn't change. Re-resolve it here, otherwise
+        // every sync keeps hitting the old (now-closed) session's UID.
+        const matchingAccount = (session.accounts || []).find(
+          (acc) => acc.account_id?.iban && acc.account_id.iban === existingMapping.iban
+        );
+        if (matchingAccount) {
+          existingMapping.enableAccountUid = matchingAccount.uid;
+        } else {
+          logger.warn(
+            `Reconnect for ${existingMapping.bankName} (${existingMapping.iban}): no matching IBAN in new session accounts, keeping old enableAccountUid`
+          );
+        }
         store.save();
         return res.redirect('/');
       }
