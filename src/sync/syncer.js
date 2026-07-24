@@ -88,7 +88,12 @@ export async function syncAll(enableClient, actualClient, store) {
         await new Promise((r) => setTimeout(r, 5000));
       } catch (err) {
         logger.error({ err }, `Sync failed for ${mapping.bankName}`);
-        resultEntry.status = 'error';
+        if (/CLOSED_SESSION|401/.test(err.message)) {
+          store.invalidateSession(mapping.sessionId);
+          resultEntry.status = 'expired';
+        } else {
+          resultEntry.status = 'error';
+        }
         resultEntry.error = err.message;
         results.push(resultEntry);
         store.addSyncLog({ results: [resultEntry] });

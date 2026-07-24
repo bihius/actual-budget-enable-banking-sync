@@ -55,6 +55,14 @@ export class Store {
     return Object.values(this.state.sessions);
   }
 
+  invalidateSession(id) {
+    const session = this.state.sessions[id];
+    if (session) {
+      session.validUntil = new Date(0).toISOString();
+      this.save();
+    }
+  }
+
   removeSession(id) {
     delete this.state.sessions[id];
     this.state.accountMappings = this.state.accountMappings.filter((m) => m.sessionId !== id);
