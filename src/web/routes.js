@@ -92,10 +92,14 @@ export function createRouter({ enableClient, actualClient, store, config }) {
 
     let html = readView('index.html');
 
-    // Add Syncing status to header if active
-    const syncStatusHeader = syncing
-      ? '<div style="background:#fff3cd;color:#856404;padding:0.75rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #ffeeba"><strong>Sync in progress...</strong> The system is currently fetching data from your bank. Refresh in a few minutes to see results.</div>'
-      : '';
+    let syncStatusHeader = '';
+    if (!actualClient.isReady()) {
+      syncStatusHeader +=
+        '<div style="background:#f8d7da;color:#721c24;padding:0.75rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #f5c6cb"><strong>Actual Budget not connected.</strong> Syncing is paused. This can happen if the local sync state is corrupted - check the service logs; a "Reset sync" in Actual (Settings &gt; Advanced) followed by a restart of this service may be required.</div>';
+    } else if (syncing) {
+      syncStatusHeader +=
+        '<div style="background:#fff3cd;color:#856404;padding:0.75rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #ffeeba"><strong>Sync in progress...</strong> The system is currently fetching data from your bank. Refresh in a few minutes to see results.</div>';
+    }
 
     html = html.replace('{{SYNC_STATUS}}', syncStatusHeader);
 
@@ -309,6 +313,9 @@ export function createRouter({ enableClient, actualClient, store, config }) {
 
   // Manual sync - run in background to prevent timeouts
   router.post('/sync/now', (req, res) => {
+    if (!actualClient.isReady()) {
+      return res.status(503).json({ status: 'error', message: 'Actual Budget is not connected' });
+    }
     // Check if already syncing
     // We can't await syncAll here because it takes too long
     // But we can fire it off

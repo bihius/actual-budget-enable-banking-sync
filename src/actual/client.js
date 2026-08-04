@@ -10,6 +10,10 @@ export class ActualClient {
     this.#initialized = true;
   }
 
+  isReady() {
+    return this.#initialized;
+  }
+
   async getAccounts() {
     return api.getAccounts();
   }

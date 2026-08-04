@@ -26,6 +26,10 @@ export async function syncAll(enableClient, actualClient, store) {
     logger.info('Sync already in progress, skipping');
     return { skipped: true };
   }
+  if (actualClient.isReady && !actualClient.isReady()) {
+    logger.warn('Actual Budget is not connected, skipping sync');
+    return { skipped: true };
+  }
   syncing = true;
   const results = [];
 
