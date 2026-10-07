@@ -7,6 +7,9 @@ export class ActualClient {
     if (this.#initialized) return;
     await api.init({ serverURL, password });
     await api.downloadBudget(syncId);
+    // downloadBudget can resolve before a background migration failure closes
+    // the file. Query it once so readiness only becomes true for an open budget.
+    await api.getAccounts();
     this.#initialized = true;
   }
 
