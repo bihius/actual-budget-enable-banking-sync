@@ -14,7 +14,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@actual-app/api": "^26.9.0",
+    "@actual-app/api": "^26.10.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^3.0.3",
